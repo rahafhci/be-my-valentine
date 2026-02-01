@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Be my Valentine? 💘</title>
+
+  <style>
+    :root { --pad: 24px; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(circle at top, #ffe6f0 0%, #fff 55%, #ffeef6 100%);
+      color: #1b1b1b;
+      overflow: hidden;
+    }
+
+    .card {
+      width: min(560px, calc(100vw - 2*var(--pad)));
+      padding: 28px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 105, 180, .25);
+      box-shadow: 0 18px 60px rgba(255, 20, 147, .12);
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 36px);
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0 0 18px;
+      font-size: 16px;
+      opacity: .85;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      padding: 14px 18px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active { transform: translateY(1px) scale(0.99); }
+
+    #yesBtn {
+      background: linear-gradient(135deg, #ff4d88, #ff2fb3);
+      color: white;
+      box-shadow: 0 12px 26px rgba(255, 47, 179, .28);
+    }
+
+    #noBtn {
+      background: #f3f4f6;
+      color: #111827;
+      box-shadow: 0 10px 22px rgba(17, 24, 39, .08);
+      position: relative;
+    }
+
+    .yay {
+      display: none;
+      margin-top: 18px;
+      font-size: clamp(22px, 3.5vw, 28px);
+      font-weight: 750;
+    }
+
+    .confetti {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 22px;
+    }
+
+    .heart {
+      position: absolute;
+      font-size: 18px;
+      opacity: 0;
+      transform: translateY(0);
+      animation: floatUp 900ms ease-out forwards;
+      filter: drop-shadow(0 6px 10px rgba(255, 47, 179, .25));
+    }
+
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(10px) scale(.9); }
+      15%  { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.2); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="card">
+    <div class="confetti" id="confetti"></div>
+
+    <h1>Will you be my Valentine? 💘</h1>
+    <p>(Choose wisely 😌)</p>
+
+    <div class="buttons">
+      <button id="yesBtn">Yes 🥰</button>
+      <button id="noBtn">No 🙃</button>
+    </div>
+
+    <div class="yay" id="yay" aria-live="polite">yay 🥰</div>
+  </div>
+
+  <script>
+    const card = document.getElementById('card');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
+    const yay    = document.getElementById('yay');
+    const confetti = document.getElementById('confetti');
+
+    let noIsFloating = false;
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function randomPositionForNo() {
+      const pad = 20;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const rect = noBtn.getBoundingClientRect();
+      const bw = rect.width || 120;
+      const bh = rect.height || 48;
+
+      const x = Math.random() * (vw - bw - pad * 2) + pad;
+      const y = Math.random() * (vh - bh - pad * 2) + pad;
+
+      return {
+        left: clamp(x, pad, vw - bw - pad),
+        top:  clamp(y, pad, vh - bh - pad)
+      };
+    }
+
+    function flee() {
+      if (!noIsFloating) {
+        noIsFloating = true;
+        noBtn.style.position = 'fixed';
+        noBtn.style.zIndex = 9999;
+      }
+      const { left, top } = randomPositionForNo();
+      noBtn.style.left = left + 'px';
+      noBtn.style.top  = top  + 'px';
+    }
+
+    // Desktop: run away when the mouse gets CLOSE
+    document.addEventListener('mousemove', (e) => {
+      const rect = noBtn.getBoundingClientRect();
+      const buffer = 80;
+
+      const near =
+        e.clientX > rect.left - buffer &&
+        e.clientX < rect.right + buffer &&
+        e.clientY > rect.top - buffer &&
+        e.clientY < rect.bottom + buffer;
+
+      if (near) flee();
+    });
+
+    // Mobile: run away as soon as finger approaches
+    document.addEventListener('touchstart', flee, { passive: true });
+    document.addEventListener('touchmove', flee, { passive: true });
+
+    // Just in case…
+    noBtn.addEventListener('mouseenter', flee);
+    noBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      flee();
+    });
+
+    function popHearts(count = 16) {
+      const emojis = ['💗','💖','💘','💕','💞','💓'];
+      const rect = card.getBoundingClientRect();
+
+      for (let i = 0; i < count; i++) {
+        const h = document.createElement('span');
+        h.className = 'heart';
+        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.style.left = Math.random() * rect.width + 'px';
+        h.style.top = (rect.height - 10) + 'px';
+        h.style.animationDelay = (Math.random() * 200) + 'ms';
+        confetti.appendChild(h);
+        h.addEventListener('animationend', () => h.remove());
+      }
+    }
+
+    yesBtn.addEventListener('click', () => {
+      yay.style.display = 'block';
+      popHearts(20);
+      yesBtn.disabled = true;
+      noBtn.disabled = true;
+      noBtn.style.pointerEvents = 'none';
+    });
+
+    window.addEventListener('resize', () => {
+      if (noIsFloating) flee();
+    });
+  </script>
+</body>
+</html>
